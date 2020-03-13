@@ -1,0 +1,14 @@
+minipascal : ./src/main.c ./src/minipascal.tab.c ./src/minipascal.c
+	gcc ./src/main.c ./src/minipascal.tab.c ./src/minipascal.c -lfl -o $@
+
+./src/minipascal.c : ./src/minipascal.l ./src/minipascal.tab.h
+	flex -o $@ ./src/minipascal.l 
+
+./src/minipascal.tab.c ./src/minipascal.tab.h : ./src/minipascal.y
+	bison --defines=./src/minipascal.tab.h -o ./src/minipascal.tab.c ./src/minipascal.y -v
+
+clean : 
+	rm -f minipascal ./src/minipascal.tab.* ./src/minipascal.c 
+
+run : minipascal entrada.txt
+	./minipascal entrada.txt

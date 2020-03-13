@@ -1,0 +1,12 @@
+// Fichero de prueba de miniPascal
+main(){
+    /*    */ a=5;  /*   bgrbgd  ****/
+
+    /*
+    ab=5+2;
+
+
+    */
+    &_ab=5+2;
+    print(_ab,5);
+}

@@ -1,0 +1,3 @@
+minipascal
+./src/*.tab.*
+./src/*.output
