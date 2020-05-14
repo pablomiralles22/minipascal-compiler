@@ -1,9 +1,9 @@
 %{
-#include "minipascal.tab.h"
-#include <math.h>
-int comment_start = 0; // guardo donde comienza el comentario
-                       // para mostrar el error
-int error_count = 0;
+    #include "minipascal.tab.h"
+    #include <math.h>
+    int comment_start = 0; // guardo donde comienza el comentario
+                           // para mostrar el error
+    int errores_lexicos = 0;
 %}
 digito              [0-9]
 letra               [a-zA-Z]
@@ -13,7 +13,7 @@ panico              [^ \n\t\ra-zA-Z0-9_();:.,+/*-]
 
 /* Opción para disponer de números de línea */
 %option yylineno
-%option debug
+/*%option debug*/
 
 /* Condición de contexto */
 %x comentario
@@ -29,7 +29,7 @@ panico              [^ \n\t\ra-zA-Z0-9_();:.,+/*-]
 <comentario>(.|\n)                          ;
 <comentario><<EOF>>                         {
                                                 printf("Comentario sin cerrar, linea %d\n", comment_start);
-                                                error_count++;
+                                                errores_lexicos++;
                                                 return 0;
                                             }
 program                                     return PROGRAM;
@@ -49,18 +49,20 @@ to                                          return TO;
 write                                       return WRITE;
 read                                        return READ;
 {idinit}({idinit}|{digito})*                {
+                                                yylval.str = strdup(yytext);
                                                 if(yyleng > 16){
                                                     printf("Error en linea %d, identificador %s demasiado largo\n", yylineno, yytext);
-                                                    error_count++;
+                                                    errores_lexicos++;
                                                 }
                                                 return ID;
                                             }
 {entero}                                    {
+                                                yylval.str = strdup(yytext);
                                                 int first_nzero = 0;
                                                 while(yytext[first_nzero] == '0') first_nzero++;
                                                 if(yyleng - first_nzero > 12 || llabs(atoll(yytext)) > pow(2,31)){
                                                     printf("Error en linea %d, entero %s demasiado grande\n", yylineno, yytext);
-                                                    error_count++;
+                                                    errores_lexicos++;
                                                 }
                                                 return INTCONST;
                                             }
@@ -75,14 +77,18 @@ read                                        return READ;
 "-"                                         return MINUSOP;
 "*"                                         return MULTOP;
 "/"                                         return DIVOP;
-\"(\\.|[^"\n])*\"                           return STRING;
+\"(\\.|[^"\n])*\"                           {
+                                                yylval.str = strdup(yytext);
+                                                return STRING;
+                                            }
 \"(\\.|[^"\n])*                             {
+                                                yylval.str = strdup(yytext);
                                                 printf("Error en linea %d, cadena sin cerrar\n",yylineno);
-                                                error_count++;
+                                                errores_lexicos++;
                                                 return STRING;
                                             }
 {panico}+                                   {
                                                 printf("Error en linea %d, cadena %s\n", yylineno, yytext);
-                                                error_count++;
+                                                errores_lexicos++;
                                             }
 %%

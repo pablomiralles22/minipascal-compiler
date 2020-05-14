@@ -3,6 +3,7 @@
 
 extern int yyparse();
 extern FILE *yyin;
+extern int errores_semanticos, errores_sintacticos, errores_lexicos;
 FILE *fich;
 
 int main(int argc, char *argv[]) {
@@ -16,10 +17,12 @@ int main(int argc, char *argv[]) {
     yyin = fich;
 
     int resultado = yyparse();
-    if (resultado == 0) {
+    if (errores_lexicos + errores_semanticos + errores_sintacticos == 0) {
         printf("Analisis ok!\n");
     } else {
-        printf("Detectado error sintáctico\n");
+        printf("Errores léxicos: %d\n", errores_lexicos);
+        printf("Errores sintácticos: %d\n", errores_sintacticos);
+        printf("Errores semánticos: %d\n", errores_semanticos);
     }
 
     fclose(fich);
