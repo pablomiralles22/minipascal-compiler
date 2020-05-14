@@ -1,3 +1,4 @@
 minipascal
 ./src/*.tab.*
 ./src/*.output
+.bash_history
