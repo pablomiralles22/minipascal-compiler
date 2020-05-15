@@ -2,7 +2,24 @@
     #include <stdio.h>
     #include <string.h>
     #include "listaSimbolos.h"
+    #include "listaCodigo.h"
+    #include "code_gen.h"
     #define BUFFSIZE 1024
+    // Para errores
+    #define REDECLARATION 0
+    #define NOTDECLARED 1
+    #define WRONGTYPE 2
+    #define FUNCARGNAME 3
+    #define NOTAFUNCTION 4
+
+    char* errores[] = {
+        "redeclarado", 
+        "no declarado", 
+        "no es del tipo adecuado", 
+        "es el nombre de la función",
+        "no es una función"
+    };
+    void throw_semantic_error(char*, int);
 
     extern int yylex();
     extern int yylineno;
@@ -32,12 +49,21 @@
     // Función para insertar un ID en la lista
     void insert_id(char*, int);
     void get_id(char*, int);
+    PosicionLista get_function(char*);
+
 %}
+
+%code requires {
+    #include "listaCodigo.h"
+}
 
 /* Tipos de datos */
 %union {
     char *str;
+    ListaC codigo;
 }
+
+%type <codigo> expression
 
 /* Tokens de la gramática */
 
@@ -110,8 +136,15 @@ declarations : declarations VAR identifiers COLON type SEMICOLON
              | declarations CONST constants SEMICOLON
              |
              ;
-identifiers : ID {insert_id($1, args_on ? ARGUMENTO : VARIABLE);}
-            | identifiers COMMA ID {insert_id($3,args_on ? ARGUMENTO : VARIABLE);}
+        
+identifiers : ID {
+                     if(args_on) insert_id($1, ARGUMENTO),current_function->dato.valor++; 
+                     else insert_id($1, VARIABLE);
+                 }
+            | identifiers COMMA ID {
+                                         if(args_on) insert_id($3, ARGUMENTO),current_function->dato.valor++; 
+                                         else insert_id($3, VARIABLE);
+                                   }
             ;
 type        : INTTYPE
             ;
@@ -127,8 +160,9 @@ statements  : statement
             | statements SEMICOLON statement
             ;
 statement   : ID ASSIGNOP expression{ 
-                                        if(current_function == NULL || strcmp(current_function->dato.nombre, $1))
-                                            // si no estamos haciendo un return
+                                        imprimirCodigo($3);
+                                        if(current_function == NULL || strcmp(current_function->dato.nombre, $1) != 0)
+                                            // si no estamos haciendo un return o no estamos en una función
                                             get_id($1, VARIABLE); 
                                     }
             | IF expression THEN statement
@@ -142,12 +176,12 @@ statement   : ID ASSIGNOP expression{
 print_list  : print_item
             | print_list COMMA print_item
             ;
-print_item  : expression
+print_item  : expression {imprimirCodigo($1);}
             | STRING {
                         PosicionLista p = buscaLS(l, $1);
-                        if(p == finalLS(l) || recuperaLS(l, p).tipo != CADENA /* TODO preguntar si puede pasar*/){
+                        if(p == finalLS(l) || recuperaLS(l, p).tipo != CADENA){
                             Simbolo aux;
-                            aux.nombre = $1;
+                            aux.nombre = strdup($1);
                             aux.tipo = CADENA;
                             aux.valor = contador_cadenas++;
                             insertaLS(l, finalLS(l), aux);
@@ -157,23 +191,24 @@ print_item  : expression
 read_list   : ID { get_id($1, VARIABLE); }
             | read_list COMMA ID { get_id($3, VARIABLE);}
             ;
-expression  : expression PLUSOP expression
-            | expression MINUSOP expression
-            | expression MULTOP expression
-            | expression DIVOP expression
-            | MINUSOP expression
-            | LPAREN expression RPAREN
-            | ID { get_id($1, VARIABLE | CONSTANTE | ARGUMENTO); }
-            | INTCONST
-            | ID { get_id($1, FUNCION); } LPAREN arguments RPAREN {
-                                                                        if(current_function->dato.valor != count_args)
-                                                                        printf("Error en la línea %d: %s número incorrecto de argumentos\n", yylineno,$1);
+expression  : expression PLUSOP expression { $$ = expr_op($1, $3, '+'); }
+            | expression MINUSOP expression { $$ = expr_op($1, $3, '-'); }
+            | expression MULTOP expression { $$ = expr_op($1, $3, '*'); }
+            | expression DIVOP expression { $$ = expr_op($1, $3, '/'); }
+            | MINUSOP expression { $$ = expr_neg($2); }
+            | LPAREN expression RPAREN { $$ = expr_paren($2); }
+            | ID { get_id($1, VARIABLE | CONSTANTE | ARGUMENTO); $$ = expr_id($1); }
+            | INTCONST { $$ = expr_num($1); }
+            | ID { current_function = get_function($1); } LPAREN arguments RPAREN {
+                                                                        if(current_function != NULL && current_function->dato.valor != count_args)
+                                                                            printf("Error en la línea %d: %s número incorrecto de argumentos\n", yylineno, current_function->dato.nombre);
+                                                                        current_function = NULL;
+                                                                        $$ = creaLC();
                                                                   }
             ;
 arguments   : { count_args = 1; } expressions
             |
-            ;
-expressions : expression
+            ; expressions : expression
             | expressions COMMA expression { count_args++; }
 %%
 
@@ -183,59 +218,67 @@ void yyerror(const char *msg){
 }
 
 void insert_id(char* arg, int type){
-    // Si estamos en una función
+    // If in function
     if(current_function != NULL){
+        // Check if the id is the same as the function ID
         if(strcmp(arg, current_function->dato.nombre) == 0){
-            // Nombre igual que nombre de función
-            printf("Error en la línea %d: %s es el nombre de la función\n", yylineno, name);
-            errores_semanticos++;
-            return ;
+            throw_semantic_error(arg, FUNCARGNAME);
+            return;
         }
+        // Concatenate function prefix
         name = buffer;
-        sprintf(buffer, "%s_%s", current_function->dato.nombre, arg);
-        if(type == ARGUMENTO)
-            current_function->dato.valor++;
-    } else name = arg;
-
-    PosicionLista p = buscaLS(l, name);
+        sprintf(buffer, "%s.%s", current_function->dato.nombre, arg);
+    } else name = arg; // if not in function, name is the original
+    PosicionLista p = buscaLS(l, name); // search for name
     if(p != finalLS(l)){
-        // Redeclaración de identificador
-        printf("Error en la línea %d: %s redeclarado\n", yylineno, name);
-        errores_semanticos++;
+        // If in list, it's redeclared
+        throw_semantic_error(name, REDECLARATION);
     } else {
-        // Primera declaración de $1: es correcto
+        // Add id to list
         Simbolo aux;
-        aux.nombre = name;
+        aux.nombre = strdup(name);
         aux.tipo = type;
         if(type == FUNCION) aux.valor = 0;
         insertaLS(l, finalLS(l), aux);
     }
 }
 
+// This method searches for FUNCTION in ls
+PosicionLista get_function(char* arg){
+    PosicionLista p = buscaLS(l, arg);
+    if(p == finalLS(l) ){
+        throw_semantic_error(arg, NOTDECLARED);
+        return NULL;
+    }
+    if(p->sig->dato.tipo != FUNCION){
+        throw_semantic_error(arg, NOTAFUNCTION);
+    }
+    return p->sig;
+}
+
+// This method searches for VARIABLE, CONSTANT or ARGUMENT in LS
 void get_id(char* arg, int types){
     PosicionLista p = NULL;
-    if(current_function != NULL){
-        // estamos en una función
-        sprintf(buffer, "%s_%s", current_function->dato.nombre, arg);
-        p = buscaLS(l, buffer);
-    }
-    if(p == NULL || p == finalLS(l))
-        // si no lo he encontrado con el otro nombre o no estoy en una función
-        p = buscaLS(l, arg);
-
+    // If in function, add prefix
+    if(current_function != NULL && strcmp(current_function->dato.nombre,arg) != 0){
+        sprintf(buffer, "%s.%s", current_function->dato.nombre, arg);
+        name = buffer;
+    } else name = arg;
+    // Search for identifier
+    p = buscaLS(l, name);
     if(p == finalLS(l)){
-        // Redeclaración de identificador
-        printf("Error en la línea %d: %s no declarada\n", yylineno, arg);
-        errores_semanticos++;
+        // If we didn't find it, semantic error, not declared
+        throw_semantic_error(name, NOTDECLARED);
     } else {
         Simbolo sim = recuperaLS(l, p);
-        if((types & sim.tipo) == 0) {
-            printf("Error en la línea %d: %s no se esperaba\n", yylineno, arg);
-            errores_semanticos++;
-        } else {
-            if(sim.tipo == FUNCTION) current_function = p;
-        }
+        if((types & sim.tipo) == 0)
+            throw_semantic_error(name, WRONGTYPE);
     }
+}
+
+void throw_semantic_error(char* arg, int code){
+    printf("Error en la línea %d: %s %s\n", yylineno, arg, errores[code]);
+    errores_semanticos++;
 }
 
 int ok() {
@@ -251,6 +294,8 @@ void imprimirLS(){
         switch(aux.tipo){
             case VARIABLE:
             case CONSTANTE:
+            case ARGUMENTO:
+            case FUNCION:
                 printf("_%s: .word 0\n", aux.nombre);
                 break;
             case CADENA:

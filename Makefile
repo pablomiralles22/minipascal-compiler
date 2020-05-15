@@ -1,5 +1,5 @@
-minipascal : ./src/main.c ./src/minipascal.tab.c ./src/minipascal.c ./src/listaSimbolos.c
-	gcc ./src/main.c ./src/minipascal.tab.c ./src/minipascal.c ./src/listaSimbolos.c -lfl -o $@
+minipascal : ./src/main.c ./src/minipascal.tab.c ./src/minipascal.c ./src/listaSimbolos.c ./src/code_gen.c ./src/listaCodigo.c
+	gcc ./src/main.c ./src/minipascal.tab.c ./src/minipascal.c ./src/listaSimbolos.c ./src/code_gen.c ./src/listaCodigo.c -lfl -o $@
 
 ./src/minipascal.c : ./src/minipascal.l ./src/minipascal.tab.h
 	flex -o $@ ./src/minipascal.l 
