@@ -288,18 +288,26 @@ int ok() {
 void imprimirLS(){
     // Recorrido y generación de .data
     PosicionLista p = inicioLS(l);
+    printf("# Cadenas del programa");
+    while (p != finalLS(l)) {
+        Simbolo aux = recuperaLS(l,p);
+        // Volcar info del símbolo
+        switch(aux.tipo){
+            case CADENA:
+                printf("$str%d: \n\t%s\n",aux.valor, aux.nombre);
+                break;
+        }
+        p = siguienteLS(l,p);
+    }
+    PosicionLista p = inicioLS(l);
+    printf("# Variables y constantes");
     while (p != finalLS(l)) {
         Simbolo aux = recuperaLS(l,p);
         // Volcar info del símbolo
         switch(aux.tipo){
             case VARIABLE:
             case CONSTANTE:
-            case ARGUMENTO:
-            case FUNCION:
-                printf("_%s: .word 0\n", aux.nombre);
-                break;
-            case CADENA:
-                printf("$str%d: %s\n",aux.valor, aux.nombre);
+                printf("_%s: \n\t.word 0\n", aux.nombre);
                 break;
         }
         p = siguienteLS(l,p);
