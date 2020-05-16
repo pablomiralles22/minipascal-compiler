@@ -1,6 +1,7 @@
 program prueba ();
 var a,b,c: integer;
 begin
+    for a := 1+2 to 4+5 do write(a);
     write("Inicio del programa\n");
     a := 0; b := 0; c := 5+2-2;
     if (a) then write("a","\n")

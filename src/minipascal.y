@@ -63,7 +63,7 @@
     ListaC codigo;
 }
 
-%type <codigo> expression
+%type <codigo> expression statement read_list print_list print_item compound_statement optional_statements statements declarations constants
 
 /* Tokens de la gramática */
 
@@ -112,7 +112,16 @@
 
 
 %%
-program     : { l = creaLS(); } PROGRAM ID LPAREN RPAREN SEMICOLON functions declarations compound_statement POINT { imprimirLS(); liberaLS(l); }
+program     : { l = creaLS(); } PROGRAM ID LPAREN RPAREN SEMICOLON functions declarations compound_statement POINT { 
+                ListaC output;
+                if(ok()){
+                    imprimirLS(l);
+                    output = program_output($8, $9);
+                    imprimirCodigo(output);
+                }
+                liberaLC(output);
+                liberaLS(l);
+           }
             ;
 functions   : functions function SEMICOLON
             |
@@ -132,9 +141,9 @@ function    : FUNCTION ID {
                     current_function = NULL;
                 }
             ;
-declarations : declarations VAR identifiers COLON type SEMICOLON
-             | declarations CONST constants SEMICOLON
-             |
+declarations : declarations VAR identifiers COLON type SEMICOLON { $$ = decl_id($1); }
+             | declarations CONST constants SEMICOLON { $$ = decl_const($1, $3); }
+             | { $$ = decl_lambda(); }
              ;
         
 identifiers : ID {
@@ -148,35 +157,35 @@ identifiers : ID {
             ;
 type        : INTTYPE
             ;
-constants   : ID ASSIGNOP expression {insert_id($1, CONSTANTE);}
-            | constants COMMA ID ASSIGNOP expression {insert_id($3, CONSTANTE);}
+constants   : ID ASSIGNOP expression { insert_id($1, CONSTANTE); $$ = const_assign($1, $3); }
+            | constants COMMA ID ASSIGNOP expression { insert_id($3, CONSTANTE); $$ = const_claus($1, $3, $5); }
             ;
-compound_statement : BEGINN optional_statements END
-                   |
+compound_statement : BEGINN optional_statements END { $$ = compstat_optstat($2); }
                    ;
-optional_statements : statements
+optional_statements : statements { $$ = optstat_stats($1); }
+                    | { $$ = optstat_lambda(); }
                     ;
-statements  : statement
-            | statements SEMICOLON statement
+statements  : statement { $$ = stats_stat($1); }
+            | statements SEMICOLON statement { $$ = stats_claus($1, $3); }
             ;
 statement   : ID ASSIGNOP expression{ 
-                                        imprimirCodigo($3);
+                                        $$ = stat_assign($1, $3);
                                         if(current_function == NULL || strcmp(current_function->dato.nombre, $1) != 0)
                                             // si no estamos haciendo un return o no estamos en una función
                                             get_id($1, VARIABLE); 
                                     }
-            | IF expression THEN statement
-            | IF expression THEN statement ELSE statement
-            | WHILE expression DO statement
-            | FOR ID ASSIGNOP expression TO expression DO statement { get_id($2, VARIABLE); }
-            | WRITE LPAREN print_list RPAREN
-            | READ LPAREN read_list RPAREN
-            | compound_statement
+            | IF expression THEN statement { $$ = stat_if($2, $4); }
+            | IF expression THEN statement ELSE statement { $$ = stat_if_else($2, $4, $6); }
+            | WHILE expression DO statement { $$ = stat_while($2, $4); }
+            | FOR ID ASSIGNOP expression TO expression DO statement { get_id($2, VARIABLE); $$ = stat_for($2, $4, $6, $8); }
+            | WRITE LPAREN print_list RPAREN { $$ = stat_write($3); }
+            | READ LPAREN read_list RPAREN { $$ = stat_read($3); }
+            | compound_statement { $$ = stat_comp($1); }
             ;
-print_list  : print_item
-            | print_list COMMA print_item
+print_list  : print_item { $$ = printl_printit($1); }
+            | print_list COMMA print_item { $$ = printl_claus($1, $3); }
             ;
-print_item  : expression {imprimirCodigo($1);}
+print_item  : expression { $$ = printit_exp($1); }
             | STRING {
                         PosicionLista p = buscaLS(l, $1);
                         if(p == finalLS(l) || recuperaLS(l, p).tipo != CADENA){
@@ -185,11 +194,12 @@ print_item  : expression {imprimirCodigo($1);}
                             aux.tipo = CADENA;
                             aux.valor = contador_cadenas++;
                             insertaLS(l, finalLS(l), aux);
-                        } 
+                            $$ = printit_str(contador_cadenas-1);
+                        } else $$ = printit_str(recuperaLS(l,p).valor);
                     }
             ;
-read_list   : ID { get_id($1, VARIABLE); }
-            | read_list COMMA ID { get_id($3, VARIABLE);}
+read_list   : ID { get_id($1, VARIABLE); $$ = readl_id($1); }
+            | read_list COMMA ID { get_id($3, VARIABLE); $$ = readl_claus($1, $3);}
             ;
 expression  : expression PLUSOP expression { $$ = expr_op($1, $3, '+'); }
             | expression MINUSOP expression { $$ = expr_op($1, $3, '-'); }
@@ -288,19 +298,20 @@ int ok() {
 void imprimirLS(){
     // Recorrido y generación de .data
     PosicionLista p = inicioLS(l);
-    printf("# Cadenas del programa");
+    printf("##################\n");
+    printf("# Seccion de datos\n");
+    printf("\t.data\n");
     while (p != finalLS(l)) {
         Simbolo aux = recuperaLS(l,p);
         // Volcar info del símbolo
         switch(aux.tipo){
             case CADENA:
-                printf("$str%d: \n\t%s\n",aux.valor, aux.nombre);
+                printf("$str%d: \n\t.asciiz %s\n",aux.valor, aux.nombre);
                 break;
         }
         p = siguienteLS(l,p);
     }
-    PosicionLista p = inicioLS(l);
-    printf("# Variables y constantes");
+    p = inicioLS(l);
     while (p != finalLS(l)) {
         Simbolo aux = recuperaLS(l,p);
         // Volcar info del símbolo

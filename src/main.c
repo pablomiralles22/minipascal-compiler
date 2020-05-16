@@ -17,9 +17,7 @@ int main(int argc, char *argv[]) {
     yyin = fich;
 
     int resultado = yyparse();
-    if (errores_lexicos + errores_semanticos + errores_sintacticos == 0) {
-        printf("Analisis ok!\n");
-    } else {
+    if (errores_lexicos + errores_semanticos + errores_sintacticos != 0) {
         printf("Errores léxicos: %d\n", errores_lexicos);
         printf("Errores sintácticos: %d\n", errores_sintacticos);
         printf("Errores semánticos: %d\n", errores_semanticos);

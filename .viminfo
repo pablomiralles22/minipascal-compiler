@@ -1,0 +1,69 @@
+# Vim 8.0 generó este archivo "viminfo".
+# Puede editarlo, ¡sólo si tiene cuidado!
+
+# Viminfo version
+|1,4
+
+# Valor de 'encoding' cuando se escribió este archivo
+*encoding=utf-8
+
+
+# hlsearch on (H) or off (h):
+~h
+# Último Patrón de búsqueda:
+~MSle0~/imprimirLS
+
+# Historia de Línea de órdenes (de lo más nuevo a lo más antiguo):
+:wq
+|2,0,1589562218,,"wq"
+
+# Historia de Cadena de búsqueda (de lo más nuevo a lo más antiguo):
+?/imprimirLS
+|2,1,1589562189,47,"imprimirLS"
+
+# Historia de Expresión (de lo más nuevo a lo más antiguo):
+
+# Historia de Línea de entrada (de lo más nuevo a lo más antiguo):
+
+# Historia de Debug Line (de lo más nuevo a lo más antiguo):
+
+# Registros:
+
+# Marcas en el archivo:
+'0  303  37  ~/src/minipascal.y
+|4,48,303,37,1589562218,"~/src/minipascal.y"
+'1  302  5  ~/src/minipascal.y
+|4,49,302,5,1589562145,"~/src/minipascal.y"
+'2  302  5  ~/src/minipascal.y
+|4,50,302,5,1589562145,"~/src/minipascal.y"
+
+# Lista de saltos (el más reciente va primero):
+-'  303  37  ~/src/minipascal.y
+|4,39,303,37,1589562218,"~/src/minipascal.y"
+-'  115  117  ~/src/minipascal.y
+|4,39,115,117,1589562190,"~/src/minipascal.y"
+-'  47  9  ~/src/minipascal.y
+|4,39,47,9,1589562189,"~/src/minipascal.y"
+-'  302  5  ~/src/minipascal.y
+|4,39,302,5,1589562184,"~/src/minipascal.y"
+-'  302  5  ~/src/minipascal.y
+|4,39,302,5,1589562145,"~/src/minipascal.y"
+-'  115  117  ~/src/minipascal.y
+|4,39,115,117,1589562122,"~/src/minipascal.y"
+-'  1  0  ~/src/minipascal.y
+|4,39,1,0,1589562121,"~/src/minipascal.y"
+-'  47  9  ~/src/minipascal.y
+|4,39,47,9,1589562121,"~/src/minipascal.y"
+-'  1  0  ~/src/minipascal.y
+|4,39,1,0,1589562121,"~/src/minipascal.y"
+
+# Historia de las marcas en los archivos (de la más reciente a la más antigua):
+
+> ~/src/minipascal.y
+	*	1589562210	0
+	"	303	37
+	^	303	38
+	.	303	37
+	+	302	5
+	+	291	35
+	+	303	37
