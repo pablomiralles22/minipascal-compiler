@@ -173,6 +173,7 @@ ListaC stat_while(ListaC arg1, ListaC arg2) {
     set_oper(tag_start, "tag", NULL, NULL);
     insertaLC(arg1, inicioLC(arg1), oper);
     set_oper(recuperaResLC(arg1), "beqz", tag_end, NULL);
+    insertaLC(arg1, finalLC(arg1), oper);
     concatenaLC(arg1, arg2);
     liberaLC(arg2);
     set_oper(tag_start, "b", NULL, NULL);
