@@ -1,7 +1,7 @@
+#include "semantic_analysis.h"
+
 #include <stdio.h>
 #include <string.h>
-
-#include "semantic_analysis.h"
 #define BUFFSIZE 1024
 // Para errores
 #define REDECLARATION 0
@@ -82,7 +82,7 @@ void args_on() {
 }
 
 // end argument parsing
-void args_off() {
+PosicionLista args_off() {
     parsing_args = 0;
     if (current_fd != NULL) {
         // if more arguments than possible, do not add to list
@@ -90,12 +90,15 @@ void args_off() {
             throw_semantic_error(current_fd->dato.nombre, TOOMANYARGS);
             liberaLS(aux);
             current_fd = NULL;
-        } else {
-            current_fd->dato.valor = count_args;
-            concatenaLS(l, aux);
+            aux = NULL;
+            return NULL;
         }
+        current_fd->dato.valor = count_args;
+        concatenaLS(l, aux);
         aux = NULL;
+        return current_fd;
     }
+    return NULL;
 }
 
 // This method searches for FUNCTION in ls
@@ -127,29 +130,35 @@ void end_function_call() {
     current_fc = NULL;
 }
 
-void insert_identifier(char* name, int type) {
+PosicionLista insert_identifier(char* name, int type) {
     char* original_name = name;
+    PosicionLista ret;
     if (parsing_func) {
-        if (current_fd == NULL) return;
+        if (current_fd == NULL) return NULL;
         if (parsing_args) count_args++;
         if (strcmp(current_fd->dato.nombre, name) == 0) {
             // nombre del identificador coincide con nombre de función
             throw_semantic_error(name, FUNCARGNAME);
-            return;
+            return NULL;
         }
         sprintf(buffer, "%s.%s", current_fd->dato.nombre, name);
         name = buffer;
         if (parsing_args) {
             PosicionLista p = buscaLS(l, name);
-            if (p != finalLS(l) || insert_ls(name, ARGUMENTO, 0, aux) == NULL)
+            if (p != finalLS(l) ||
+                (ret = insert_ls(name, ARGUMENTO, count_args - 1, aux)) ==
+                    NULL) {
                 throw_semantic_error(original_name, REDECLARATION);
-            return;
+                return NULL;
+            }
+            return ret;
         }
     }
-    if (insert(name, type, 0) == NULL) {
+    if ((ret = insert(name, type, 0)) == NULL) {
         throw_semantic_error(original_name, REDECLARATION);
-        return;
+        return NULL;
     }
+    return ret;
 }
 
 int insert_string(char* str) {
@@ -158,6 +167,7 @@ int insert_string(char* str) {
         Simbolo aux;
         aux.nombre = strdup(str);
         aux.valor = str_counter++;
+        aux.tipo = CADENA;
         insertaLS(l, finalLS(l), aux);
         return aux.valor;
     } else
@@ -165,7 +175,7 @@ int insert_string(char* str) {
 }
 
 // This method searches for VARIABLE, CONSTANT or ARGUMENT in LS
-char* check_identifier(char* name, int types) {
+PosicionLista check_identifier(char* name, int types) {
     char* original_name = name;
     // If in function, add prefix
     if (parsing_func) {
@@ -173,7 +183,7 @@ char* check_identifier(char* name, int types) {
         if (strcmp(current_fd->dato.nombre, name) == 0) {
             // están accediendo a lo que guarda la función
             // no hay ningún error
-            return name;
+            return current_fd;
         }
         sprintf(buffer, "%s.%s", current_fd->dato.nombre, name);
         name = buffer;
@@ -186,9 +196,12 @@ char* check_identifier(char* name, int types) {
         return NULL;
     } else {
         Simbolo sim = recuperaLS(l, p);
-        if ((types & sim.tipo) == 0) throw_semantic_error(name, WRONGTYPE);
+        if ((types & sim.tipo) == 0) {
+            throw_semantic_error(name, WRONGTYPE);
+            return NULL;
+        }
     }
-    return name;
+    return p->sig;
 }
 
 void imprimirLS() {

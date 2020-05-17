@@ -13,12 +13,12 @@ void parse_function_call(char* name);
 void end_function_call();
 void add_param();
 void args_on();
-void args_off();
+PosicionLista args_off();
 
 // for general analysis, including functions
-void insert_identifier(char* name, int type);
+PosicionLista insert_identifier(char* name, int type);
 int insert_string(char* str);
-char* check_identifier(char* name, int types);
+PosicionLista check_identifier(char* name, int types);
 
 // outputs data
 void imprimirLS();
