@@ -93,8 +93,14 @@ program     : { l = creaLS(); } PROGRAM ID LPAREN RPAREN SEMICOLON functions dec
                 liberaLS(l);
            }
             ;
-functions   : functions function SEMICOLON { if(ok()) $$ = functions_claus($1, $2); }
-            | { if(ok()) $$ = functions_lambda(); }
+functions   : functions function SEMICOLON { if(ok()) $$ = functions_claus($1, $2);
+                                            else{
+                                                $$ = NULL;
+                                                liberaLC($1);
+                                                liberaLC($2);
+                                            }  
+                                        }
+            | { if(ok()) $$ = functions_lambda(); else $$ = NULL;}
             ;
 function    : FUNCTION ID {
                     parse_function_declaration($2);
@@ -107,12 +113,28 @@ function    : FUNCTION ID {
                     end_function_declaration();
                     if(ok())
                         $$ = function_f(aux, $14, $15);
+                    else{
+                        $$ = NULL;
+                        liberaLC($14);
+                        liberaLC($15);
+                    }
                     in_function = 0;
                 }
             ;
-declarations : declarations VAR identifiers COLON type SEMICOLON { if(ok()) $$ = decl_id($1); }
-             | declarations CONST constants SEMICOLON { if(ok()) $$ = decl_const($1, $3); }
-             | { if(ok()) $$ = decl_lambda(); }
+declarations : declarations VAR identifiers COLON type SEMICOLON { if(ok()) $$ = decl_id($1);
+                                                                    else{
+                                                                        $$ = NULL;
+                                                                        liberaLC($1);
+                                                                    }  
+                                                                }
+             | declarations CONST constants SEMICOLON { if(ok()) $$ = decl_const($1, $3);
+                                                        else{
+                                                            $$ = NULL;
+                                                            liberaLC($1);
+                                                            liberaLC($3);
+                                                        }  
+                                                    }
+             | { if(ok()) $$ = decl_lambda(); else $$ = NULL;}
              ;
         
 identifiers : ID { insert_identifier($1, VARIABLE); /* si es argumento lo detecta en el módulo*/ }
@@ -120,57 +142,217 @@ identifiers : ID { insert_identifier($1, VARIABLE); /* si es argumento lo detect
             ;
 type        : INTTYPE
             ;
-constants   : ID ASSIGNOP expression { aux = insert_identifier($1, CONSTANTE); if(ok()) $$ = const_assign(aux, $3); }
-            | constants COMMA ID ASSIGNOP expression { aux = insert_identifier($3, CONSTANTE); if(ok()) $$ = const_claus($1, aux, $5); }
+constants   : ID ASSIGNOP expression { aux = insert_identifier($1, CONSTANTE); if(ok()) $$ = const_assign(aux, $3);
+                                                                                else{
+                                                                                    $$ = NULL;
+                                                                                    liberaLC($3);
+                                                                                }  
+                                                                            }
+            | constants COMMA ID ASSIGNOP expression { aux = insert_identifier($3, CONSTANTE); if(ok()) $$ = const_claus($1, aux, $5);
+                                                                                                else{
+                                                                                                    $$ = NULL;
+                                                                                                    liberaLC($1);
+                                                                                                    liberaLC($5);
+                                                                                                } 
+                                                                                            }
             ;
-compound_statement : BEGINN optional_statements END { if(ok()) $$ = compstat_optstat($2); }
+compound_statement : BEGINN optional_statements END { if(ok()) $$ = compstat_optstat($2);
+                                                        else{
+                                                            $$ = NULL;
+                                                            liberaLC($2);
+                                                        }  
+                                                    }
                    ;
-optional_statements : statements { if(ok()) $$ = optstat_stats($1); }
-                    | { if(ok()) $$ = optstat_lambda(); }
+optional_statements : statements { if(ok()) $$ = optstat_stats($1);
+                                    else{
+                                        $$ = NULL;
+                                        liberaLC($1);
+                                    } 
+                                }
+                    | { if(ok()) $$ = optstat_lambda(); else $$ = NULL; }
                     ;
-statements  : statement { if(ok()) $$ = stats_stat($1); }
-            | statements SEMICOLON statement { if(ok()) $$ = stats_claus($1, $3); }
+statements  : statement { if(ok()) $$ = stats_stat($1);
+                        else{
+                            $$ = NULL;
+                            liberaLC($1);
+                        } 
+                    }
+            | statements SEMICOLON statement { if(ok()) $$ = stats_claus($1, $3);
+                                                else{
+                                                    $$ = NULL;
+                                                    liberaLC($1);
+                                                    liberaLC($3);
+                                                } 
+                                            }
             ;
 statement   : ID ASSIGNOP expression{ 
                                         aux = check_identifier($1, VARIABLE); 
                                         if(aux != NULL && ok())
                                             $$ = stat_assign(aux, $3);
+                                        else{
+                                            $$ = NULL;
+                                            liberaLC($3);
+                                        }
                                     }
-            | IF expression THEN statement { if(ok()) $$ = stat_if($2, $4); }
-            | IF expression THEN statement ELSE statement { if(ok()) $$ = stat_if_else($2, $4, $6); }
-            | WHILE expression DO statement { if(ok()) $$ = stat_while($2, $4); }
-            | FOR ID ASSIGNOP expression TO expression DO statement { aux = check_identifier($2, VARIABLE); if(aux != NULL && ok()) $$ = stat_for(aux, $4, $6, $8); }
-            | WRITE LPAREN print_list RPAREN { if(ok()) $$ = stat_write($3); }
-            | READ LPAREN read_list RPAREN { if(ok()) $$ = stat_read($3); }
-            | compound_statement { if(ok()) $$ = stat_comp($1); }
+            | IF expression THEN statement { if(ok()) $$ = stat_if($2, $4);
+                                            else{
+                                                $$ = NULL;
+                                                liberaLC($2);
+                                                liberaLC($4);
+                                            }  
+                                        }
+            | IF expression THEN statement ELSE statement { if(ok()) $$ = stat_if_else($2, $4, $6);
+                                                            else{
+                                                                $$ = NULL;
+                                                                liberaLC($2);
+                                                                liberaLC($4);
+                                                                liberaLC($6);
+                                                            }  
+                                                        }
+            | WHILE expression DO statement { if(ok()) $$ = stat_while($2, $4);
+                                                else{
+                                                    $$ = NULL;
+                                                    liberaLC($2);
+                                                    liberaLC($4);
+                                                }  
+                                            }
+            | FOR ID ASSIGNOP expression TO expression DO statement { aux = check_identifier($2, VARIABLE); if(aux != NULL && ok()) $$ = stat_for(aux, $4, $6, $8);
+                                                                                                            else{
+                                                                                                                $$ = NULL;
+                                                                                                                liberaLC($4);
+                                                                                                                liberaLC($6);
+                                                                                                                liberaLC($8);
+                                                                                                            } 
+                                                                                                            }
+            | WRITE LPAREN print_list RPAREN { if(ok()) $$ = stat_write($3);
+                                                else{
+                                                    $$ = NULL;
+                                                    liberaLC($3);
+                                                } 
+                                            }
+            | READ LPAREN read_list RPAREN { if(ok()) $$ = stat_read($3);
+                                            else{
+                                                $$ = NULL;
+                                                liberaLC($3);
+                                            } 
+                                        }
+            | compound_statement { if(ok()) $$ = stat_comp($1);
+                                    else{
+                                        $$ = NULL;
+                                        liberaLC($1);
+                                    } 
+                                }
             ;
-print_list  : print_item { if(ok()) $$ = printl_printit($1); }
-            | print_list COMMA print_item { if(ok()) $$ = printl_claus($1, $3); }
+print_list  : print_item { if(ok()) $$ = printl_printit($1); 
+                            else{
+                                $$ = NULL;
+                                liberaLC($1);
+                            }
+                        }
+            | print_list COMMA print_item { if(ok()) $$ = printl_claus($1, $3);
+                                            else{
+                                                $$ = NULL;
+                                                liberaLC($1);
+                                                liberaLC($3);
+                                            } 
+                                        }
             ;
-print_item  : expression { if(ok()) $$ = printit_exp($1); }
+print_item  : expression { if(ok()) $$ = printit_exp($1);
+                            else{
+                                $$ = NULL;
+                                liberaLC($1);
+                            } 
+                        }
             | STRING {
                         int str_id = insert_string($1);
                         if(ok()) $$ = printit_str(str_id);
                     }
             ;
 read_list   : ID { aux = check_identifier($1, VARIABLE); if(aux != NULL && ok()) $$ = readl_id(aux); }
-            | read_list COMMA ID { aux = check_identifier($3, VARIABLE); if(aux != NULL && ok()) $$ = readl_claus($1, aux);}
+            | read_list COMMA ID { aux = check_identifier($3, VARIABLE); if(aux != NULL && ok()) $$ = readl_claus($1, aux);
+                                                                        else{
+                                                                            $$ = NULL;
+                                                                            liberaLC($1);
+                                                                        }
+                                                                    }
             ;
-expression  : expression PLUSOP expression { if(ok()) $$ = expr_op($1, $3, '+'); }
-            | expression MINUSOP expression { if(ok()) $$ = expr_op($1, $3, '-'); }
-            | expression MULTOP expression { if(ok()) $$ = expr_op($1, $3, '*'); }
-            | expression DIVOP expression { if(ok()) $$ = expr_op($1, $3, '/'); }
-            | MINUSOP expression { if(ok()) $$ = expr_neg($2); }
-            | LPAREN expression RPAREN { if(ok()) $$ = expr_paren($2); }
+expression  : expression PLUSOP expression { if(ok()) $$ = expr_op($1, $3, '+');
+                                            else{
+                                                $$ = NULL;
+                                                liberaLC($1);
+                                                liberaLC($3);
+                                            } 
+                                        }
+            | expression MINUSOP expression { if(ok()) $$ = expr_op($1, $3, '-');
+                                            else{
+                                                $$ = NULL;
+                                                liberaLC($1);
+                                                liberaLC($3);
+                                            } 
+                                        }
+            | expression MULTOP expression { if(ok()) $$ = expr_op($1, $3, '*');
+                                            else{
+                                                $$ = NULL;
+                                                liberaLC($1);
+                                                liberaLC($3);
+                                            } 
+                                        }
+            | expression DIVOP expression { if(ok()) $$ = expr_op($1, $3, '/');
+                                            else{
+                                                $$ = NULL;
+                                                liberaLC($1);
+                                                liberaLC($3);
+                                            }  
+                                        }
+            | MINUSOP expression { if(ok()) $$ = expr_neg($2);
+                                    else{
+                                        $$ = NULL;
+                                        liberaLC($2);
+                                    } 
+                                }
+            | LPAREN expression RPAREN { if(ok()) $$ = expr_paren($2);
+                                        else{
+                                            $$ = NULL;
+                                            liberaLC($2);
+                                        } 
+                                    }
             | ID { aux = check_identifier($1, VARIABLE | CONSTANTE | ARGUMENTO); if(aux != NULL && ok()) $$ = expr_id(aux); }
-            | INTCONST { if(ok()) $$ = expr_num($1); }
-            | ID { parse_function_call($1); } LPAREN arguments RPAREN { end_function_call(); if(ok()) aux = buscaLS(l, $1)->sig, $$ = expr_func(aux, $4); }
+            | INTCONST { if(ok()) $$ = expr_num($1);
+                            else{
+                                $$ = NULL;
+                            }
+                        }
+            | ID { parse_function_call($1); } LPAREN arguments RPAREN { end_function_call(); 
+                                                                        if(ok()) aux = buscaLS(l, $1)->sig, $$ = expr_func(aux, $4);
+                                                                        else{
+                                                                            $$ = NULL;
+                                                                            liberaLC($4);
+                                                                        }
+                                                                    }
             ;
-arguments   : { param_count = 0; } expressions { if(ok()) $$ = args_exprs($2); }
-            | { if(ok()) $$ = args_lambda(); }
+arguments   : { param_count = 0; } expressions { if(ok()) $$ = args_exprs($2);
+                                                    else{
+                                                        $$ = NULL;
+                                                        liberaLC($2);
+                                                    }
+                                                }
+            | { if(ok()) $$ = args_lambda(); else $$ = NULL; }
             ; 
-expressions : expression { add_param(); if(ok()) exprs_expr($1, param_count++); }
-            | expressions COMMA expression { add_param(); if(ok()) exprs_claus($1, $3, param_count++); }
+expressions : expression { add_param(); 
+                            if(ok()) exprs_expr($1, param_count++);
+                            else {
+                                $$ = NULL;
+                                liberaLC($1);
+                            } 
+                        }
+            | expressions COMMA expression { add_param(); 
+                                            if(ok()) exprs_claus($1, $3, param_count++);
+                                            else{
+                                                $$ = NULL;
+                                                liberaLC($1);
+                                                liberaLC($3);
+                                            }    
+                                         }
 %%
 
 void yyerror(const char *msg){
