@@ -74,3 +74,14 @@ PosicionLista siguienteLS(Lista lista, PosicionLista p) {
     assert(p != lista->ultimo);
     return p->sig;
 }
+
+void concatenaLS(Lista l1, Lista l2) {
+    if (l2->n == 0) {
+        free(l2);
+        return;
+    }
+    l1->ultimo->sig = l2->cabecera->sig;
+    l1->ultimo = l2->ultimo;
+    l1->n += l2->n;
+    free(l2);
+}

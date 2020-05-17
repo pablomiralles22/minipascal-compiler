@@ -37,5 +37,6 @@ int longitudLS(Lista lista);
 PosicionLista inicioLS(Lista lista);
 PosicionLista finalLS(Lista lista);
 PosicionLista siguienteLS(Lista lista, PosicionLista p);
+void concatenaLS(Lista l1, Lista l2);
 
 #endif

@@ -68,23 +68,9 @@
     #include <string.h>
     #include "listaSimbolos.h"
     #include "listaCodigo.h"
+    #include "semantic_analysis.h"
     #include "code_gen.h"
-    #define BUFFSIZE 1024
-    // Para errores
-    #define REDECLARATION 0
-    #define NOTDECLARED 1
-    #define WRONGTYPE 2
-    #define FUNCARGNAME 3
-    #define NOTAFUNCTION 4
 
-    char* errores[] = {
-        "redeclarado", 
-        "no declarado", 
-        "no es del tipo adecuado", 
-        "es el nombre de la función",
-        "no es una función"
-    };
-    void throw_semantic_error(char*, int);
 
     extern int yylex();
     extern int yylineno;
@@ -92,32 +78,15 @@
     int errores_sintacticos = 0;
     int errores_semanticos = 0;
     extern int errores_lexicos;
-    int args_on = 0;
-    int count_args;
-    int contador_cadenas = 1;
     void yyerror(const char *msg);
     int ok();
 
     // Lista de símbolos
     Lista l;
-    
-    // Funcion actual
-    PosicionLista current_function = NULL;
-
-    // Buffer para guardar nombre del ID
-    char buffer[BUFFSIZE];
+    // puntero auxiliar
     char* name;
 
-    // Generar .data
-    void imprimirLS();
-
-    // Función para insertar un ID en la lista
-    void insert_id(char*, int);
-    void get_id(char*, int);
-    PosicionLista get_function(char*);
-
-
-#line 121 "./src/minipascal.tab.c" /* yacc.c:339  */
+#line 90 "./src/minipascal.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -147,11 +116,11 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 56 "./src/minipascal.y" /* yacc.c:355  */
+#line 25 "./src/minipascal.y" /* yacc.c:355  */
 
     #include "listaCodigo.h"
 
-#line 155 "./src/minipascal.tab.c" /* yacc.c:355  */
+#line 124 "./src/minipascal.tab.c" /* yacc.c:355  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -196,12 +165,12 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 61 "./src/minipascal.y" /* yacc.c:355  */
+#line 30 "./src/minipascal.y" /* yacc.c:355  */
 
     char *str;
     ListaC codigo;
 
-#line 205 "./src/minipascal.tab.c" /* yacc.c:355  */
+#line 174 "./src/minipascal.tab.c" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -218,7 +187,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 222 "./src/minipascal.tab.c" /* yacc.c:358  */
+#line 191 "./src/minipascal.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -460,16 +429,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  3
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   126
+#define YYLAST   123
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  33
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  24
+#define YYNNTS  23
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  51
+#define YYNRULES  50
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  118
+#define YYNSTATES  117
 
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
@@ -518,12 +487,12 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   115,   115,   115,   126,   127,   129,   132,   134,   129,
-     144,   145,   146,   149,   153,   158,   160,   161,   163,   165,
-     166,   168,   169,   171,   177,   178,   179,   180,   181,   182,
-     183,   185,   186,   188,   189,   201,   202,   204,   205,   206,
-     207,   208,   209,   210,   211,   212,   212,   219,   219,   220,
-     221,   222
+       0,    84,    84,    84,    94,    95,    97,    99,   101,    97,
+     107,   108,   109,   112,   113,   115,   117,   118,   120,   122,
+     123,   125,   126,   128,   133,   134,   135,   136,   137,   138,
+     139,   141,   142,   144,   145,   150,   151,   153,   154,   155,
+     156,   157,   158,   159,   160,   161,   161,   163,   164,   166,
+     167
 };
 #endif
 
@@ -540,7 +509,7 @@ static const char *const yytname[] =
   "$@2", "$@3", "$@4", "declarations", "identifiers", "type", "constants",
   "compound_statement", "optional_statements", "statements", "statement",
   "print_list", "print_item", "read_list", "expression", "$@5",
-  "arguments", "$@6", "expressions", YY_NULLPTR
+  "arguments", "expressions", YY_NULLPTR
 };
 #endif
 
@@ -556,12 +525,12 @@ static const yytype_uint16 yytoknum[] =
 };
 # endif
 
-#define YYPACT_NINF -105
+#define YYPACT_NINF -98
 
 #define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-105)))
+  (!!((Yystate) == (-98)))
 
-#define YYTABLE_NINF -50
+#define YYTABLE_NINF -46
 
 #define yytable_value_is_error(Yytable_value) \
   0
@@ -570,18 +539,18 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-    -105,    22,    31,  -105,    19,    24,    25,    30,  -105,    62,
-      51,    65,    78,  -105,  -105,    69,    72,    59,    66,    70,
-      67,    -8,  -105,   -14,    17,    17,    75,    74,    76,    71,
-    -105,    88,    77,  -105,  -105,    95,    17,  -105,    83,    96,
-      86,    84,  -105,    17,    17,    -6,     1,    79,   -13,    89,
-      17,  -105,    59,  -105,    50,    81,  -105,    87,  -105,    90,
-      33,    -3,    59,    17,    17,    17,    17,    59,    17,  -105,
-      45,  -105,    50,  -105,    64,    50,  -105,    72,    17,  -105,
-      91,  -105,    98,    -3,    -3,  -105,  -105,  -105,    28,  -105,
-     -13,  -105,    94,    92,    50,    93,    17,    59,    17,  -105,
-    -105,    97,  -105,    50,    99,  -105,    21,    96,    17,    59,
-     100,    50,  -105,   101,    96,  -105,    78,  -105
+     -98,     3,    15,   -98,    19,     0,    16,    24,   -98,    42,
+      40,    36,    29,   -98,   -98,    48,    64,    60,    58,    62,
+      66,    32,   -98,   -14,    52,    52,    76,    74,    75,    70,
+     -98,    90,    77,   -98,   -98,    95,    52,   -98,    83,    97,
+      86,    84,   -98,    52,    52,    -6,     1,    79,   -13,    89,
+      52,   -98,    60,   -98,    61,    81,   -98,    87,   -98,    88,
+      57,    -3,    60,    52,    52,    52,    52,    60,    52,   -98,
+      21,   -98,    61,   -98,    43,    61,   -98,    64,    52,   -98,
+      52,   -98,   100,    -3,    -3,   -98,   -98,   -98,    33,   -98,
+     -13,   -98,    94,    91,    61,    61,    92,    93,    60,    52,
+     -98,   -98,    96,   -98,    52,   -98,    22,    97,    61,    60,
+      99,   -98,    98,    97,   -98,    29,   -98
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -597,26 +566,26 @@ static const yytype_uint8 yydefact[] =
        0,    18,     0,     7,    16,     0,    15,     0,    14,     0,
        0,    41,     0,     0,     0,     0,     0,     0,     0,    34,
        0,    31,    33,    35,     0,    23,    22,     0,     0,    10,
-      47,    42,    24,    37,    38,    39,    40,    26,     0,    28,
-       0,    29,     0,     8,    17,     0,     0,     0,     0,    32,
-      36,     0,    46,    50,    48,    25,     0,     0,     0,     0,
-       0,    51,    27,     0,     0,    12,     0,     9
+      48,    42,    24,    37,    38,    39,    40,    26,     0,    28,
+       0,    29,     0,     8,    17,    49,     0,    47,     0,     0,
+      32,    36,     0,    46,     0,    25,     0,     0,    50,     0,
+       0,    27,     0,     0,    12,     0,     9
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-    -105,  -105,  -105,  -105,  -105,  -105,  -105,  -105,     0,    40,
-    -104,  -105,   -12,  -105,  -105,   -48,  -105,    29,  -105,   -23,
-    -105,  -105,  -105,  -105
+     -98,   -98,   -98,   -98,   -98,   -98,   -98,   -98,     2,    37,
+     -97,   -98,   -12,   -98,   -98,   -48,   -98,    28,   -98,   -23,
+     -98,   -98,   -98
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     1,     2,     9,    11,    19,    77,   101,    12,    23,
+      -1,     1,     2,     9,    11,    19,    77,   102,    12,    23,
       57,    21,    30,    31,    32,    33,    70,    71,    74,    72,
-      59,    95,    96,   104
+      59,    96,    97
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -624,36 +593,36 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      18,    45,    46,   110,    76,    62,    41,    42,    69,    43,
-     115,    39,    40,    54,    82,    67,    37,    44,    38,    87,
-      60,    61,     3,    63,    64,    65,    66,    75,    65,    66,
-      63,    64,    65,    66,     4,   109,    41,    42,     5,    43,
-      83,    84,    85,    86,    98,    88,     6,    44,     7,   105,
-      63,    64,    65,    66,     8,    94,    81,    63,    64,    65,
-      66,   112,    63,    64,    65,    66,    10,    17,    89,    24,
-      13,    90,    25,   103,    26,   106,    27,    28,    29,    63,
-      64,    65,    66,    15,    16,   111,    17,    91,    20,    14,
-      92,    22,    35,    34,    47,    36,    48,    51,    49,    50,
-      53,    52,    55,    56,   117,    58,   -45,    68,    73,    78,
-      97,    79,    80,   100,   -49,   116,   102,    93,    40,    99,
-       0,     0,   107,   113,     0,   108,   114
+      18,    45,    46,     3,    76,    62,    41,    42,    69,    43,
+     110,    39,    40,    54,    82,    67,   114,    44,     4,    87,
+      60,    61,     6,    63,    64,    65,    66,    75,    65,    66,
+      63,    64,    65,    66,    15,    16,   109,    17,     5,     7,
+      83,    84,    85,    86,    89,    88,    10,    90,     8,    99,
+     105,    63,    64,    65,    66,    94,    37,    95,    38,    13,
+      14,   111,    63,    64,    65,    66,    91,    20,    17,    92,
+      24,    41,    42,    25,    43,    26,   106,    27,    28,    29,
+      81,   108,    44,    22,    35,    34,    63,    64,    65,    66,
+      63,    64,    65,    66,    36,    47,    48,    49,    50,    51,
+      53,    52,    55,   116,    56,    58,   -45,    68,    73,    78,
+      80,    79,    98,   101,    93,   103,   115,    40,   100,   104,
+       0,   107,   112,   113
 };
 
 static const yytype_int8 yycheck[] =
 {
-      12,    24,    25,   107,    52,    11,    19,    20,    21,    22,
-     114,    25,    26,    36,    62,    14,    24,    30,    26,    67,
-      43,    44,     0,    29,    30,    31,    32,    50,    31,    32,
-      29,    30,    31,    32,     3,    14,    19,    20,    19,    22,
-      63,    64,    65,    66,    16,    68,    22,    30,    23,    97,
-      29,    30,    31,    32,    24,    78,    23,    29,    30,    31,
-      32,   109,    29,    30,    31,    32,     4,     8,    23,    10,
-      19,    26,    13,    96,    15,    98,    17,    18,    19,    29,
-      30,    31,    32,     5,     6,   108,     8,    23,    19,    24,
-      26,    19,    22,    27,    19,    28,    22,     9,    22,    28,
-       5,    24,    19,     7,   116,    19,    22,    28,    19,    28,
-      12,    24,    22,    19,    23,   115,    23,    77,    26,    90,
-      -1,    -1,    25,    23,    -1,    26,    25
+      12,    24,    25,     0,    52,    11,    19,    20,    21,    22,
+     107,    25,    26,    36,    62,    14,   113,    30,     3,    67,
+      43,    44,    22,    29,    30,    31,    32,    50,    31,    32,
+      29,    30,    31,    32,     5,     6,    14,     8,    19,    23,
+      63,    64,    65,    66,    23,    68,     4,    26,    24,    16,
+      98,    29,    30,    31,    32,    78,    24,    80,    26,    19,
+      24,   109,    29,    30,    31,    32,    23,    19,     8,    26,
+      10,    19,    20,    13,    22,    15,    99,    17,    18,    19,
+      23,   104,    30,    19,    22,    27,    29,    30,    31,    32,
+      29,    30,    31,    32,    28,    19,    22,    22,    28,     9,
+       5,    24,    19,   115,     7,    19,    22,    28,    19,    28,
+      22,    24,    12,    19,    77,    23,   114,    26,    90,    26,
+      -1,    25,    23,    25
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -669,9 +638,9 @@ static const yytype_uint8 yystos[] =
       52,    52,    11,    29,    30,    31,    32,    14,    28,    21,
       49,    50,    52,    19,    51,    52,    48,    39,    28,    24,
       22,    23,    48,    52,    52,    52,    52,    48,    52,    23,
-      26,    23,    26,    42,    52,    54,    55,    12,    16,    50,
-      19,    40,    23,    52,    56,    48,    52,    25,    26,    14,
-      43,    52,    48,    23,    25,    43,    41,    45
+      26,    23,    26,    42,    52,    52,    54,    55,    12,    16,
+      50,    19,    40,    23,    26,    48,    52,    25,    52,    14,
+      43,    48,    23,    25,    43,    41,    45
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
@@ -681,8 +650,8 @@ static const yytype_uint8 yyr1[] =
       41,    41,    41,    42,    42,    43,    44,    44,    45,    46,
       46,    47,    47,    48,    48,    48,    48,    48,    48,    48,
       48,    49,    49,    50,    50,    51,    51,    52,    52,    52,
-      52,    52,    52,    52,    52,    53,    52,    55,    54,    54,
-      56,    56
+      52,    52,    52,    52,    52,    53,    52,    54,    54,    55,
+      55
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
@@ -692,8 +661,8 @@ static const yytype_uint8 yyr2[] =
        6,     4,     0,     1,     3,     1,     3,     5,     3,     1,
        0,     1,     3,     3,     4,     6,     4,     8,     4,     4,
        1,     1,     3,     1,     1,     1,     3,     3,     3,     3,
-       3,     2,     3,     1,     1,     0,     5,     0,     2,     0,
-       1,     3
+       3,     2,     3,     1,     1,     0,     5,     1,     0,     1,
+       3
 };
 
 
@@ -1370,319 +1339,294 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 115 "./src/minipascal.y" /* yacc.c:1646  */
+#line 84 "./src/minipascal.y" /* yacc.c:1646  */
     { l = creaLS(); }
-#line 1376 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 1345 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 115 "./src/minipascal.y" /* yacc.c:1646  */
-    { 
-                ListaC output;
+#line 84 "./src/minipascal.y" /* yacc.c:1646  */
+    {
                 if(ok()){
                     imprimirLS(l);
-                    output = program_output((yyvsp[-2].codigo), (yyvsp[-1].codigo));
+                    ListaC output = program_output((yyvsp[-2].codigo), (yyvsp[-1].codigo));
                     imprimirCodigo(output);
+                    liberaLC(output);
                 }
-                liberaLC(output);
                 liberaLS(l);
            }
-#line 1391 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 1359 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 129 "./src/minipascal.y" /* yacc.c:1646  */
+#line 97 "./src/minipascal.y" /* yacc.c:1646  */
     {
-                    insert_id((yyvsp[0].str), FUNCION);
-                    current_function = finalLS(l);
+                    parse_function_declaration((yyvsp[0].str));
                 }
-#line 1400 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 1367 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 132 "./src/minipascal.y" /* yacc.c:1646  */
+#line 99 "./src/minipascal.y" /* yacc.c:1646  */
     { 
-                    args_on = 1; 
+                    args_on();
                 }
-#line 1408 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 1375 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 134 "./src/minipascal.y" /* yacc.c:1646  */
+#line 101 "./src/minipascal.y" /* yacc.c:1646  */
     {
-                    args_on = 0;
-                    if(current_function->dato.valor > 4){
-                        errores_semanticos++;
-                        printf("Error en la función %s, más de 4 argumentos\n", (yyvsp[-5].str));
-                    }
+                    args_off();
                 }
-#line 1420 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 1383 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 140 "./src/minipascal.y" /* yacc.c:1646  */
+#line 103 "./src/minipascal.y" /* yacc.c:1646  */
     {
-                    current_function = NULL;
+                    end_function_declaration();
                 }
-#line 1428 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 1391 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 144 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = decl_id((yyvsp[-5].codigo)); }
-#line 1434 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 107 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = decl_id((yyvsp[-5].codigo)); }
+#line 1397 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 145 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = decl_const((yyvsp[-3].codigo), (yyvsp[-1].codigo)); }
-#line 1440 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 108 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = decl_const((yyvsp[-3].codigo), (yyvsp[-1].codigo)); }
+#line 1403 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 146 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = decl_lambda(); }
-#line 1446 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 109 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = decl_lambda(); }
+#line 1409 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 149 "./src/minipascal.y" /* yacc.c:1646  */
-    {
-                     if(args_on) insert_id((yyvsp[0].str), ARGUMENTO),current_function->dato.valor++; 
-                     else insert_id((yyvsp[0].str), VARIABLE);
-                 }
-#line 1455 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 112 "./src/minipascal.y" /* yacc.c:1646  */
+    { insert_identifier((yyvsp[0].str), VARIABLE); /* si es argumento lo detecta en el módulo*/ }
+#line 1415 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 153 "./src/minipascal.y" /* yacc.c:1646  */
-    {
-                                         if(args_on) insert_id((yyvsp[0].str), ARGUMENTO),current_function->dato.valor++; 
-                                         else insert_id((yyvsp[0].str), VARIABLE);
-                                   }
-#line 1464 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 113 "./src/minipascal.y" /* yacc.c:1646  */
+    { insert_identifier((yyvsp[0].str), VARIABLE); }
+#line 1421 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 160 "./src/minipascal.y" /* yacc.c:1646  */
-    { insert_id((yyvsp[-2].str), CONSTANTE); (yyval.codigo) = const_assign((yyvsp[-2].str), (yyvsp[0].codigo)); }
-#line 1470 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 117 "./src/minipascal.y" /* yacc.c:1646  */
+    { insert_identifier((yyvsp[-2].str), CONSTANTE); if(ok()) (yyval.codigo) = const_assign((yyvsp[-2].str), (yyvsp[0].codigo)); }
+#line 1427 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 161 "./src/minipascal.y" /* yacc.c:1646  */
-    { insert_id((yyvsp[-2].str), CONSTANTE); (yyval.codigo) = const_claus((yyvsp[-4].codigo), (yyvsp[-2].str), (yyvsp[0].codigo)); }
-#line 1476 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 118 "./src/minipascal.y" /* yacc.c:1646  */
+    { insert_identifier((yyvsp[-2].str), CONSTANTE); if(ok()) (yyval.codigo) = const_claus((yyvsp[-4].codigo), (yyvsp[-2].str), (yyvsp[0].codigo)); }
+#line 1433 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 163 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = compstat_optstat((yyvsp[-1].codigo)); }
-#line 1482 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 120 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = compstat_optstat((yyvsp[-1].codigo)); }
+#line 1439 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 165 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = optstat_stats((yyvsp[0].codigo)); }
-#line 1488 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 122 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = optstat_stats((yyvsp[0].codigo)); }
+#line 1445 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 166 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = optstat_lambda(); }
-#line 1494 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 123 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = optstat_lambda(); }
+#line 1451 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 168 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = stats_stat((yyvsp[0].codigo)); }
-#line 1500 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 125 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = stats_stat((yyvsp[0].codigo)); }
+#line 1457 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 169 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = stats_claus((yyvsp[-2].codigo), (yyvsp[0].codigo)); }
-#line 1506 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 126 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = stats_claus((yyvsp[-2].codigo), (yyvsp[0].codigo)); }
+#line 1463 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 171 "./src/minipascal.y" /* yacc.c:1646  */
+#line 128 "./src/minipascal.y" /* yacc.c:1646  */
     { 
-                                        (yyval.codigo) = stat_assign((yyvsp[-2].str), (yyvsp[0].codigo));
-                                        if(current_function == NULL || strcmp(current_function->dato.nombre, (yyvsp[-2].str)) != 0)
-                                            // si no estamos haciendo un return o no estamos en una función
-                                            get_id((yyvsp[-2].str), VARIABLE); 
+                                        name = check_identifier((yyvsp[-2].str), VARIABLE); 
+                                        if(name != NULL && ok())
+                                            (yyval.codigo) = stat_assign(name, (yyvsp[0].codigo));
                                     }
-#line 1517 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 1473 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 177 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = stat_if((yyvsp[-2].codigo), (yyvsp[0].codigo)); }
-#line 1523 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 133 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = stat_if((yyvsp[-2].codigo), (yyvsp[0].codigo)); }
+#line 1479 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 178 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = stat_if_else((yyvsp[-4].codigo), (yyvsp[-2].codigo), (yyvsp[0].codigo)); }
-#line 1529 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 134 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = stat_if_else((yyvsp[-4].codigo), (yyvsp[-2].codigo), (yyvsp[0].codigo)); }
+#line 1485 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 179 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = stat_while((yyvsp[-2].codigo), (yyvsp[0].codigo)); }
-#line 1535 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 135 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = stat_while((yyvsp[-2].codigo), (yyvsp[0].codigo)); }
+#line 1491 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 180 "./src/minipascal.y" /* yacc.c:1646  */
-    { get_id((yyvsp[-6].str), VARIABLE); (yyval.codigo) = stat_for((yyvsp[-6].str), (yyvsp[-4].codigo), (yyvsp[-2].codigo), (yyvsp[0].codigo)); }
-#line 1541 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 136 "./src/minipascal.y" /* yacc.c:1646  */
+    { name = check_identifier((yyvsp[-6].str), VARIABLE); if(name != NULL && ok()) (yyval.codigo) = stat_for(name, (yyvsp[-4].codigo), (yyvsp[-2].codigo), (yyvsp[0].codigo)); }
+#line 1497 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 181 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = stat_write((yyvsp[-1].codigo)); }
-#line 1547 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 137 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = stat_write((yyvsp[-1].codigo)); }
+#line 1503 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 182 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = stat_read((yyvsp[-1].codigo)); }
-#line 1553 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 138 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = stat_read((yyvsp[-1].codigo)); }
+#line 1509 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 183 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = stat_comp((yyvsp[0].codigo)); }
-#line 1559 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 139 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = stat_comp((yyvsp[0].codigo)); }
+#line 1515 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 185 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = printl_printit((yyvsp[0].codigo)); }
-#line 1565 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 141 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = printl_printit((yyvsp[0].codigo)); }
+#line 1521 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 186 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = printl_claus((yyvsp[-2].codigo), (yyvsp[0].codigo)); }
-#line 1571 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 142 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = printl_claus((yyvsp[-2].codigo), (yyvsp[0].codigo)); }
+#line 1527 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 188 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = printit_exp((yyvsp[0].codigo)); }
-#line 1577 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 144 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = printit_exp((yyvsp[0].codigo)); }
+#line 1533 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 189 "./src/minipascal.y" /* yacc.c:1646  */
+#line 145 "./src/minipascal.y" /* yacc.c:1646  */
     {
-                        PosicionLista p = buscaLS(l, (yyvsp[0].str));
-                        if(p == finalLS(l) || recuperaLS(l, p).tipo != CADENA){
-                            Simbolo aux;
-                            aux.nombre = strdup((yyvsp[0].str));
-                            aux.tipo = CADENA;
-                            aux.valor = contador_cadenas++;
-                            insertaLS(l, finalLS(l), aux);
-                            (yyval.codigo) = printit_str(contador_cadenas-1);
-                        } else (yyval.codigo) = printit_str(recuperaLS(l,p).valor);
+                        int str_id = insert_string((yyvsp[0].str));
+                        if(ok()) (yyval.codigo) = printit_str(str_id);
                     }
-#line 1593 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 1542 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 201 "./src/minipascal.y" /* yacc.c:1646  */
-    { get_id((yyvsp[0].str), VARIABLE); (yyval.codigo) = readl_id((yyvsp[0].str)); }
-#line 1599 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 150 "./src/minipascal.y" /* yacc.c:1646  */
+    { name = check_identifier((yyvsp[0].str), VARIABLE); if(name != NULL && ok()) (yyval.codigo) = readl_id(name); }
+#line 1548 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 202 "./src/minipascal.y" /* yacc.c:1646  */
-    { get_id((yyvsp[0].str), VARIABLE); (yyval.codigo) = readl_claus((yyvsp[-2].codigo), (yyvsp[0].str));}
-#line 1605 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 151 "./src/minipascal.y" /* yacc.c:1646  */
+    { name = check_identifier((yyvsp[0].str), VARIABLE); if(name != NULL && ok()) (yyval.codigo) = readl_claus((yyvsp[-2].codigo), (yyvsp[0].str));}
+#line 1554 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 204 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = expr_op((yyvsp[-2].codigo), (yyvsp[0].codigo), '+'); }
-#line 1611 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 153 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = expr_op((yyvsp[-2].codigo), (yyvsp[0].codigo), '+'); }
+#line 1560 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 205 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = expr_op((yyvsp[-2].codigo), (yyvsp[0].codigo), '-'); }
-#line 1617 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 154 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = expr_op((yyvsp[-2].codigo), (yyvsp[0].codigo), '-'); }
+#line 1566 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 206 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = expr_op((yyvsp[-2].codigo), (yyvsp[0].codigo), '*'); }
-#line 1623 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 155 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = expr_op((yyvsp[-2].codigo), (yyvsp[0].codigo), '*'); }
+#line 1572 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 207 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = expr_op((yyvsp[-2].codigo), (yyvsp[0].codigo), '/'); }
-#line 1629 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 156 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = expr_op((yyvsp[-2].codigo), (yyvsp[0].codigo), '/'); }
+#line 1578 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 208 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = expr_neg((yyvsp[0].codigo)); }
-#line 1635 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 157 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = expr_neg((yyvsp[0].codigo)); }
+#line 1584 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 209 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = expr_paren((yyvsp[-1].codigo)); }
-#line 1641 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 158 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = expr_paren((yyvsp[-1].codigo)); }
+#line 1590 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 210 "./src/minipascal.y" /* yacc.c:1646  */
-    { get_id((yyvsp[0].str), VARIABLE | CONSTANTE | ARGUMENTO); (yyval.codigo) = expr_id((yyvsp[0].str)); }
-#line 1647 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 159 "./src/minipascal.y" /* yacc.c:1646  */
+    { name = check_identifier((yyvsp[0].str), VARIABLE | CONSTANTE | ARGUMENTO); if(name != NULL && ok()) (yyval.codigo) = expr_id((yyvsp[0].str)); }
+#line 1596 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 211 "./src/minipascal.y" /* yacc.c:1646  */
-    { (yyval.codigo) = expr_num((yyvsp[0].str)); }
-#line 1653 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 160 "./src/minipascal.y" /* yacc.c:1646  */
+    { if(ok()) (yyval.codigo) = expr_num((yyvsp[0].str)); }
+#line 1602 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 212 "./src/minipascal.y" /* yacc.c:1646  */
-    { current_function = get_function((yyvsp[0].str)); }
-#line 1659 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 161 "./src/minipascal.y" /* yacc.c:1646  */
+    { parse_function_call((yyvsp[0].str)); }
+#line 1608 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 212 "./src/minipascal.y" /* yacc.c:1646  */
-    {
-                                                                        if(current_function != NULL && current_function->dato.valor != count_args)
-                                                                            printf("Error en la línea %d: %s número incorrecto de argumentos\n", yylineno, current_function->dato.nombre);
-                                                                        current_function = NULL;
-                                                                        (yyval.codigo) = creaLC();
-                                                                  }
-#line 1670 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 161 "./src/minipascal.y" /* yacc.c:1646  */
+    { end_function_call(); if(ok()) (yyval.codigo) = expr_id("a"); }
+#line 1614 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
-  case 47:
-#line 219 "./src/minipascal.y" /* yacc.c:1646  */
-    { count_args = 1; }
-#line 1676 "./src/minipascal.tab.c" /* yacc.c:1646  */
+  case 49:
+#line 166 "./src/minipascal.y" /* yacc.c:1646  */
+    { add_param(); }
+#line 1620 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
-  case 51:
-#line 222 "./src/minipascal.y" /* yacc.c:1646  */
-    { count_args++; }
-#line 1682 "./src/minipascal.tab.c" /* yacc.c:1646  */
+  case 50:
+#line 167 "./src/minipascal.y" /* yacc.c:1646  */
+    { add_param(); }
+#line 1626 "./src/minipascal.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1686 "./src/minipascal.tab.c" /* yacc.c:1646  */
+#line 1630 "./src/minipascal.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1910,7 +1854,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 223 "./src/minipascal.y" /* yacc.c:1906  */
+#line 168 "./src/minipascal.y" /* yacc.c:1906  */
 
 
 void yyerror(const char *msg){
@@ -1918,103 +1862,6 @@ void yyerror(const char *msg){
     errores_sintacticos++;
 }
 
-void insert_id(char* arg, int type){
-    // If in function
-    if(current_function != NULL){
-        // Check if the id is the same as the function ID
-        if(strcmp(arg, current_function->dato.nombre) == 0){
-            throw_semantic_error(arg, FUNCARGNAME);
-            return;
-        }
-        // Concatenate function prefix
-        name = buffer;
-        sprintf(buffer, "%s.%s", current_function->dato.nombre, arg);
-    } else name = arg; // if not in function, name is the original
-    PosicionLista p = buscaLS(l, name); // search for name
-    if(p != finalLS(l)){
-        // If in list, it's redeclared
-        throw_semantic_error(name, REDECLARATION);
-    } else {
-        // Add id to list
-        Simbolo aux;
-        aux.nombre = strdup(name);
-        aux.tipo = type;
-        if(type == FUNCION) aux.valor = 0;
-        insertaLS(l, finalLS(l), aux);
-    }
-}
-
-// This method searches for FUNCTION in ls
-PosicionLista get_function(char* arg){
-    PosicionLista p = buscaLS(l, arg);
-    if(p == finalLS(l) ){
-        throw_semantic_error(arg, NOTDECLARED);
-        return NULL;
-    }
-    if(p->sig->dato.tipo != FUNCION){
-        throw_semantic_error(arg, NOTAFUNCTION);
-    }
-    return p->sig;
-}
-
-// This method searches for VARIABLE, CONSTANT or ARGUMENT in LS
-void get_id(char* arg, int types){
-    PosicionLista p = NULL;
-    // If in function, add prefix
-    if(current_function != NULL && strcmp(current_function->dato.nombre,arg) != 0){
-        sprintf(buffer, "%s.%s", current_function->dato.nombre, arg);
-        name = buffer;
-    } else name = arg;
-    // Search for identifier
-    p = buscaLS(l, name);
-    if(p == finalLS(l)){
-        // If we didn't find it, semantic error, not declared
-        throw_semantic_error(name, NOTDECLARED);
-    } else {
-        Simbolo sim = recuperaLS(l, p);
-        if((types & sim.tipo) == 0)
-            throw_semantic_error(name, WRONGTYPE);
-    }
-}
-
-void throw_semantic_error(char* arg, int code){
-    printf("Error en la línea %d: %s %s\n", yylineno, arg, errores[code]);
-    errores_semanticos++;
-}
-
 int ok() {
     return !(errores_lexicos + errores_sintacticos + errores_semanticos);
 }
-
-void imprimirLS(){
-    // Recorrido y generación de .data
-    PosicionLista p = inicioLS(l);
-    printf("##################\n");
-    printf("# Seccion de datos\n");
-    printf("\t.data\n");
-    while (p != finalLS(l)) {
-        Simbolo aux = recuperaLS(l,p);
-        // Volcar info del símbolo
-        switch(aux.tipo){
-            case CADENA:
-                printf("$str%d: \n\t.asciiz %s\n",aux.valor, aux.nombre);
-                break;
-        }
-        p = siguienteLS(l,p);
-    }
-    p = inicioLS(l);
-    while (p != finalLS(l)) {
-        Simbolo aux = recuperaLS(l,p);
-        // Volcar info del símbolo
-        switch(aux.tipo){
-            case VARIABLE:
-            case CONSTANTE:
-                printf("_%s: \n\t.word 0\n", aux.nombre);
-                break;
-        }
-        p = siguienteLS(l,p);
-    }
-}
-
-
-

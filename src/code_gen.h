@@ -3,8 +3,6 @@
 
 #include "listaCodigo.h"
 
-// extern ListaC lc;
-
 // expression -> ...
 
 ListaC expr_num(char* arg);

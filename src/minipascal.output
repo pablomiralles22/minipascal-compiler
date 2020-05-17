@@ -71,13 +71,11 @@ Grammar
 
    45 expression: ID $@5 LPAREN arguments RPAREN
 
-   46 $@6: %empty
+   46 arguments: expressions
+   47          | %empty
 
-   47 arguments: $@6 expressions
-   48          | %empty
-
-   49 expressions: expression
-   50            | expressions COMMA expression
+   48 expressions: expression
+   49            | expressions COMMA expression
 
 
 Terminals, with rules where they appear
@@ -107,7 +105,7 @@ LPAREN (277) 2 8 27 28 41 45
 RPAREN (278) 2 8 27 28 41 45
 SEMICOLON (279) 2 3 9 10 21
 COLON (280) 8 9
-COMMA (281) 13 16 31 35 50
+COMMA (281) 13 16 31 35 49
 POINT (282) 2
 ASSIGNOP (283) 15 16 22 26
 PLUSOP (284) 36
@@ -158,15 +156,13 @@ read_list (51)
     on left: 34 35, on right: 28 35
 expression (52)
     on left: 36 37 38 39 40 41 42 43 45, on right: 15 16 22 23 24 25
-    26 32 36 37 38 39 40 41 49 50
+    26 32 36 37 38 39 40 41 48 49
 $@5 (53)
     on left: 44, on right: 45
 arguments (54)
-    on left: 47 48, on right: 45
-$@6 (55)
-    on left: 46, on right: 47
-expressions (56)
-    on left: 49 50, on right: 47 50
+    on left: 46 47, on right: 45
+expressions (55)
+    on left: 48 49, on right: 46 49
 
 
 State 0
@@ -948,11 +944,16 @@ State 80
 
    45 expression: ID $@5 LPAREN . arguments RPAREN
 
-    RPAREN    reduce using rule 48 (arguments)
-    $default  reduce using rule 46 ($@6)
+    ID        shift, and go to state 41
+    INTCONST  shift, and go to state 42
+    LPAREN    shift, and go to state 43
+    MINUSOP   shift, and go to state 44
 
-    arguments  go to state 95
-    $@6        go to state 96
+    $default  reduce using rule 47 (arguments)
+
+    expression   go to state 95
+    arguments    go to state 96
+    expressions  go to state 97
 
 
 State 81
@@ -967,7 +968,7 @@ State 82
    23 statement: IF expression THEN statement .
    24          | IF expression THEN statement . ELSE statement
 
-    ELSE  shift, and go to state 97
+    ELSE  shift, and go to state 98
 
     ELSE      [reduce using rule 23 (statement)]
     $default  reduce using rule 23 (statement)
@@ -1038,7 +1039,7 @@ State 88
    38           | expression . MULTOP expression
    39           | expression . DIVOP expression
 
-    TO       shift, and go to state 98
+    TO       shift, and go to state 99
     PLUSOP   shift, and go to state 63
     MINUSOP  shift, and go to state 64
     MULTOP   shift, and go to state 65
@@ -1062,7 +1063,7 @@ State 90
     LPAREN    shift, and go to state 43
     MINUSOP   shift, and go to state 44
 
-    print_item  go to state 99
+    print_item  go to state 100
     expression  go to state 72
 
 
@@ -1077,7 +1078,7 @@ State 92
 
    35 read_list: read_list COMMA . ID
 
-    ID  shift, and go to state 100
+    ID  shift, and go to state 101
 
 
 State 93
@@ -1089,7 +1090,7 @@ State 93
 
     $default  reduce using rule 7 ($@4)
 
-    $@4  go to state 101
+    $@4  go to state 102
 
 
 State 94
@@ -1110,25 +1111,38 @@ State 94
 
 State 95
 
-   45 expression: ID $@5 LPAREN arguments . RPAREN
+   36 expression: expression . PLUSOP expression
+   37           | expression . MINUSOP expression
+   38           | expression . MULTOP expression
+   39           | expression . DIVOP expression
+   48 expressions: expression .
 
-    RPAREN  shift, and go to state 102
+    PLUSOP   shift, and go to state 63
+    MINUSOP  shift, and go to state 64
+    MULTOP   shift, and go to state 65
+    DIVOP    shift, and go to state 66
+
+    $default  reduce using rule 48 (expressions)
 
 
 State 96
 
-   47 arguments: $@6 . expressions
+   45 expression: ID $@5 LPAREN arguments . RPAREN
 
-    ID        shift, and go to state 41
-    INTCONST  shift, and go to state 42
-    LPAREN    shift, and go to state 43
-    MINUSOP   shift, and go to state 44
-
-    expression   go to state 103
-    expressions  go to state 104
+    RPAREN  shift, and go to state 103
 
 
 State 97
+
+   46 arguments: expressions .
+   49 expressions: expressions . COMMA expression
+
+    COMMA  shift, and go to state 104
+
+    $default  reduce using rule 46 (arguments)
+
+
+State 98
 
    24 statement: IF expression THEN statement ELSE . statement
 
@@ -1144,7 +1158,7 @@ State 97
     statement           go to state 105
 
 
-State 98
+State 99
 
    26 statement: FOR ID ASSIGNOP expression TO . expression DO statement
 
@@ -1156,58 +1170,44 @@ State 98
     expression  go to state 106
 
 
-State 99
+State 100
 
    31 print_list: print_list COMMA print_item .
 
     $default  reduce using rule 31 (print_list)
 
 
-State 100
+State 101
 
    35 read_list: read_list COMMA ID .
 
     $default  reduce using rule 35 (read_list)
 
 
-State 101
+State 102
 
     8 function: FUNCTION ID $@2 LPAREN CONST $@3 identifiers $@4 . COLON type RPAREN COLON type declarations compound_statement
 
     COLON  shift, and go to state 107
 
 
-State 102
+State 103
 
    45 expression: ID $@5 LPAREN arguments RPAREN .
 
     $default  reduce using rule 45 (expression)
 
 
-State 103
-
-   36 expression: expression . PLUSOP expression
-   37           | expression . MINUSOP expression
-   38           | expression . MULTOP expression
-   39           | expression . DIVOP expression
-   49 expressions: expression .
-
-    PLUSOP   shift, and go to state 63
-    MINUSOP  shift, and go to state 64
-    MULTOP   shift, and go to state 65
-    DIVOP    shift, and go to state 66
-
-    $default  reduce using rule 49 (expressions)
-
-
 State 104
 
-   47 arguments: $@6 expressions .
-   50 expressions: expressions . COMMA expression
+   49 expressions: expressions COMMA . expression
 
-    COMMA  shift, and go to state 108
+    ID        shift, and go to state 41
+    INTCONST  shift, and go to state 42
+    LPAREN    shift, and go to state 43
+    MINUSOP   shift, and go to state 44
 
-    $default  reduce using rule 47 (arguments)
+    expression  go to state 108
 
 
 State 105
@@ -1243,14 +1243,18 @@ State 107
 
 State 108
 
-   50 expressions: expressions COMMA . expression
+   36 expression: expression . PLUSOP expression
+   37           | expression . MINUSOP expression
+   38           | expression . MULTOP expression
+   39           | expression . DIVOP expression
+   49 expressions: expressions COMMA expression .
 
-    ID        shift, and go to state 41
-    INTCONST  shift, and go to state 42
-    LPAREN    shift, and go to state 43
-    MINUSOP   shift, and go to state 44
+    PLUSOP   shift, and go to state 63
+    MINUSOP  shift, and go to state 64
+    MULTOP   shift, and go to state 65
+    DIVOP    shift, and go to state 66
 
-    expression  go to state 111
+    $default  reduce using rule 49 (expressions)
 
 
 State 109
@@ -1266,65 +1270,49 @@ State 109
     ID      shift, and go to state 29
 
     compound_statement  go to state 30
-    statement           go to state 112
+    statement           go to state 111
 
 
 State 110
 
     8 function: FUNCTION ID $@2 LPAREN CONST $@3 identifiers $@4 COLON type . RPAREN COLON type declarations compound_statement
 
-    RPAREN  shift, and go to state 113
+    RPAREN  shift, and go to state 112
 
 
 State 111
-
-   36 expression: expression . PLUSOP expression
-   37           | expression . MINUSOP expression
-   38           | expression . MULTOP expression
-   39           | expression . DIVOP expression
-   50 expressions: expressions COMMA expression .
-
-    PLUSOP   shift, and go to state 63
-    MINUSOP  shift, and go to state 64
-    MULTOP   shift, and go to state 65
-    DIVOP    shift, and go to state 66
-
-    $default  reduce using rule 50 (expressions)
-
-
-State 112
 
    26 statement: FOR ID ASSIGNOP expression TO expression DO statement .
 
     $default  reduce using rule 26 (statement)
 
 
-State 113
+State 112
 
     8 function: FUNCTION ID $@2 LPAREN CONST $@3 identifiers $@4 COLON type RPAREN . COLON type declarations compound_statement
 
-    COLON  shift, and go to state 114
+    COLON  shift, and go to state 113
 
 
-State 114
+State 113
 
     8 function: FUNCTION ID $@2 LPAREN CONST $@3 identifiers $@4 COLON type RPAREN COLON . type declarations compound_statement
 
     INTTYPE  shift, and go to state 56
 
-    type  go to state 115
+    type  go to state 114
 
 
-State 115
+State 114
 
     8 function: FUNCTION ID $@2 LPAREN CONST $@3 identifiers $@4 COLON type RPAREN COLON type . declarations compound_statement
 
     $default  reduce using rule 11 (declarations)
 
-    declarations  go to state 116
+    declarations  go to state 115
 
 
-State 116
+State 115
 
     8 function: FUNCTION ID $@2 LPAREN CONST $@3 identifiers $@4 COLON type RPAREN COLON type declarations . compound_statement
     9 declarations: declarations . VAR identifiers COLON type SEMICOLON
@@ -1334,10 +1322,10 @@ State 116
     VAR     shift, and go to state 16
     BEGINN  shift, and go to state 17
 
-    compound_statement  go to state 117
+    compound_statement  go to state 116
 
 
-State 117
+State 116
 
     8 function: FUNCTION ID $@2 LPAREN CONST $@3 identifiers $@4 COLON type RPAREN COLON type declarations compound_statement .
 

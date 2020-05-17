@@ -6,10 +6,22 @@ extern Lista l;
 extern int errores_semanticos;
 extern int yylineno;
 
-void parse_function_declaration();
+// for function related analysis
+void parse_function_declaration(char* name);
 void end_function_declaration();
+void parse_function_call(char* name);
+void end_function_call();
+void add_param();
 void args_on();
 void args_off();
+
+// for general analysis, including functions
+void insert_identifier(char* name, int type);
+int insert_string(char* str);
+char* check_identifier(char* name, int types);
+
+// outputs data
+void imprimirLS();
 
 #endif
 

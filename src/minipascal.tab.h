@@ -40,7 +40,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 56 "./src/minipascal.y" /* yacc.c:1909  */
+#line 25 "./src/minipascal.y" /* yacc.c:1909  */
 
     #include "listaCodigo.h"
 
@@ -89,7 +89,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 61 "./src/minipascal.y" /* yacc.c:1909  */
+#line 30 "./src/minipascal.y" /* yacc.c:1909  */
 
     char *str;
     ListaC codigo;
