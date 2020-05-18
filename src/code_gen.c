@@ -132,8 +132,8 @@ ListaC envolve(ListaC arg, char* name) {
     while (p != finalLC(arg)) {
         Operacion o = recuperaLC(arg, p);
         mark(o.res, reg_aux);
-        mark(o.arg1, reg_aux);
-        mark(o.arg2, reg_aux);
+        /*mark(o.arg1, reg_aux);*/
+        /*mark(o.arg2, reg_aux);*/
         p = siguienteLC(arg, p);
     }
     // beginning
@@ -484,20 +484,13 @@ ListaC args_exprs(ListaC arg) { return arg; }
  */
 
 ListaC program_output(ListaC funcs, ListaC decl, ListaC comp_stat) {
-    // apilo el $ra
-    set_oper("$ra", "sw", "0($sp)", NULL);
-    insertaLC(decl, inicioLC(decl), oper);
-    set_oper("$sp", "addiu", "$sp", "-4");
-    insertaLC(decl, inicioLC(decl), oper);
     // etiqueta main
     set_oper("main", "tag", NULL, NULL);
     insertaLC(decl, inicioLC(decl), oper);
     // al final desapilo $ra y salto a él
-    set_oper("$ra", "lw", "0($sp)", NULL);
+    set_oper("$v0", "li", "10", NULL);
     insertaLC(comp_stat, finalLC(comp_stat), oper);
-    set_oper("$sp", "addiu", "$sp", "4");
-    insertaLC(comp_stat, finalLC(comp_stat), oper);
-    set_oper("$ra", "jr", NULL, NULL);
+    set_oper(NULL, "syscall", NULL, NULL);
     insertaLC(comp_stat, finalLC(comp_stat), oper);
     // concateno todo
     concatenaLC(funcs, decl);
