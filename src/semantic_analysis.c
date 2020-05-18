@@ -25,6 +25,7 @@ char* errores[] = {"redeclarado",
                    "llamada con número incorrecto de parámetros"};
 
 char buffer[BUFFSIZE];
+extern int errores_semanticos;
 int parsing_func = 0;
 int parsing_args = 0;
 int str_counter = 1;
@@ -90,6 +91,7 @@ PosicionLista args_off() {
             throw_semantic_error(current_fd->dato.nombre, TOOMANYARGS);
             liberaLS(aux);
             current_fd = NULL;
+            fflush(NULL);
             aux = NULL;
             return NULL;
         }

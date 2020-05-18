@@ -19,7 +19,7 @@
     // Lista de símbolos
     Lista l;
     // puntero auxiliar
-    PosicionLista aux;
+    PosicionLista aux, aux_fd;
     int in_function = 0;
     int param_count;
 %}
@@ -108,11 +108,11 @@ function    : FUNCTION ID {
                 } LPAREN CONST { 
                     args_on();
                 } identifiers {
-                    aux = args_off();
+                    aux_fd = args_off();
                 } COLON type RPAREN COLON type declarations compound_statement {
                     end_function_declaration();
                     if(ok())
-                        $$ = function_f(aux, $14, $15);
+                        $$ = function_f(aux_fd, $14, $15);
                     else{
                         $$ = NULL;
                         liberaLC($14);
@@ -266,9 +266,10 @@ print_item  : expression { if(ok()) $$ = printit_exp($1);
             | STRING {
                         int str_id = insert_string($1);
                         if(ok()) $$ = printit_str(str_id);
+                        else $$ = NULL;
                     }
             ;
-read_list   : ID { aux = check_identifier($1, VARIABLE); if(aux != NULL && ok()) $$ = readl_id(aux); }
+read_list   : ID { aux = check_identifier($1, VARIABLE); if(aux != NULL && ok()) $$ = readl_id(aux); else $$ = NULL; }
             | read_list COMMA ID { aux = check_identifier($3, VARIABLE); if(aux != NULL && ok()) $$ = readl_claus($1, aux);
                                                                         else{
                                                                             $$ = NULL;
@@ -361,5 +362,6 @@ void yyerror(const char *msg){
 }
 
 int ok() {
+    fflush(NULL);
     return !(errores_lexicos + errores_sintacticos + errores_semanticos);
 }
