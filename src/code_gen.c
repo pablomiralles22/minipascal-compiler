@@ -328,9 +328,9 @@ ListaC stat_while(ListaC arg1, ListaC arg2) {
 ListaC stat_comp(ListaC arg) { return arg; }
 
 ListaC stat_for(PosicionLista arg1, ListaC arg2, ListaC arg3, ListaC arg4) {
-    ListaC ret, advance_iteration, aux;
+    ListaC ret, advance_iteration, aux; // ret contains response
     char *tag_start = new_tag(), *tag_end = new_tag();
-    ret = stat_assign(arg1, arg2);
+    ret = stat_assign(arg1, arg2); // id := expr1
     // concatenate iteration advance to body of iteration
     advance_iteration =
         stat_assign(arg1, expr_op(expr_id(arg1), expr_num("1"), '+'));
@@ -340,20 +340,23 @@ ListaC stat_for(PosicionLista arg1, ListaC arg2, ListaC arg3, ListaC arg4) {
     set_oper(tag_start, "tag", NULL, NULL);
     insertaLC(ret, finalLC(ret), oper);
     // comparison and jump
-    aux = expr_id(arg1);
-    concatenaLC(ret, arg3);
-    concatenaLC(ret, aux);
-    set_oper(recuperaResLC(aux), "bgt", recuperaResLC(arg3), tag_end);
+    concatenaLC(ret, arg3); // value of expr2
+    aux = expr_id(arg1); // get value of variable
+    concatenaLC(ret, aux); 
+    set_oper(recuperaResLC(aux), "bgt", recuperaResLC(arg3), tag_end); // compare these values
     insertaLC(ret, finalLC(ret), oper);
+    // liberate registers and lists
     liberarReg(recuperaResLC(aux));
     liberarReg(recuperaResLC(arg3));
     liberaLC(arg3);
     liberaLC(aux);
+    // body of loop
     concatenaLC(ret, arg4);
     liberaLC(arg4);
     // jump to beginning
     set_oper(tag_start, "b", NULL, NULL);
     insertaLC(ret, finalLC(ret), oper);
+    // end tag
     set_oper(tag_end, "tag", NULL, NULL);
     insertaLC(ret, finalLC(ret), oper);
     return ret;
