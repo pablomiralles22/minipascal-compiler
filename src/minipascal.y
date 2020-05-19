@@ -163,7 +163,8 @@ compound_statement : BEGINN optional_statements END { if(ok()) $$ = compstat_opt
                                                         }  
                                                     }
                    ;
-optional_statements : statements { if(ok()) $$ = optstat_stats($1);
+optional_statements : statements { 
+                                    if(ok()) $$ = optstat_stats($1);
                                     else{
                                         $$ = NULL;
                                         liberaLC($1);
@@ -317,7 +318,7 @@ expression  : expression PLUSOP expression { if(ok()) $$ = expr_op($1, $3, '+');
                                             liberaLC($2);
                                         } 
                                     }
-            | ID { aux = check_identifier($1, VARIABLE | CONSTANTE | ARGUMENTO); if(aux != NULL && ok()) $$ = expr_id(aux); }
+            | ID { aux = check_identifier($1, VARIABLE | CONSTANTE | ARGUMENTO); if(aux != NULL && ok()) $$ = expr_id(aux); else $$ = NULL; }
             | INTCONST { if(ok()) $$ = expr_num($1);
                             else{
                                 $$ = NULL;
@@ -362,6 +363,5 @@ void yyerror(const char *msg){
 }
 
 int ok() {
-    fflush(NULL);
     return !(errores_lexicos + errores_sintacticos + errores_semanticos);
 }
