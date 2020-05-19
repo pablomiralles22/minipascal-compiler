@@ -11,7 +11,7 @@ begin
     _123456789012345678 := 1;
 
     // Secuencia de caracteres incorrectos
-    write(#@$%&);
+    write(#@$%& "hol");
 
     // Cadena de caracteres sin cerrar
     write("Hola\");

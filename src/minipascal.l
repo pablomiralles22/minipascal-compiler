@@ -28,7 +28,7 @@ panico              [^ \n\t\ra-zA-Z0-9_();:.,+/*-]
 <comentario>"*)"                            BEGIN(INITIAL);
 <comentario>(.|\n)                          ;
 <comentario><<EOF>>                         {
-                                                printf("Comentario sin cerrar, linea %d\n", comment_start);
+                                                printf("Error en la linea %d, comentario sin cerrar\n", comment_start);
                                                 errores_lexicos++;
                                                 return 0;
                                             }
@@ -88,7 +88,7 @@ read                                        return READ;
                                                 return STRING;
                                             }
 {panico}+                                   {
-                                                printf("Error en linea %d, cadena %s\n", yylineno, yytext);
+                                                printf("Error en linea %d, secuencia de caracteres incorrectos %s\n", yylineno, yytext);
                                                 errores_lexicos++;
                                             }
 %%
