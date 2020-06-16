@@ -341,7 +341,7 @@ arguments   : { param_count = 0; } expressions { if(ok()) $$ = args_exprs($2);
             | { if(ok()) $$ = args_lambda(); else $$ = NULL; }
             ; 
 expressions : expression { add_param(); 
-                            if(ok()) exprs_expr($1, param_count++);
+                            if(ok()) $$ = exprs_expr($1, param_count++);
                             else {
                                 $$ = NULL;
                                 liberaLC($1);
