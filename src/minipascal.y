@@ -348,7 +348,7 @@ expressions : expression { add_param();
                             } 
                         }
             | expressions COMMA expression { add_param(); 
-                                            if(ok()) exprs_claus($1, $3, param_count++);
+                                            if(ok()) $$ = exprs_claus($1, $3, param_count++);
                                             else{
                                                 $$ = NULL;
                                                 liberaLC($1);
